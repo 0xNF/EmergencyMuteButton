@@ -6,6 +6,7 @@ use std::{process::exit, time::Duration};
 use crate::audio::set_system_volume_to_zero;
 
 fn main() {
+    log::info!("Starting EmergencyMuteButton");
     let listening_event_ids = [4624, 4625, 4626, 4800, 4801, 4802, 4803];
 
     if let Err(e) = win_event::listen_for_events(
@@ -16,10 +17,12 @@ fn main() {
         |e| {
             win_event::print_event_log_details(e);
             if let Err(e) = set_system_volume_to_zero() {
+                log::error!("{}", e);
                 eprintln!("{}", e);
             }
         },
     ) {
+        log::error!("{}", e);
         eprintln!("failed to listen for events: {}", e);
         exit(-1)
     }

@@ -5,6 +5,7 @@ use std::time::Duration;
 use windows::Win32::System::EventLog::*;
 use windows::Win32::System::Memory::{GetProcessHeap, HEAP_FLAGS, HeapAlloc, HeapFree};
 
+#[derive(Debug)]
 pub enum EventFetchOption {
     FromBeginning,
     FromSubscriptionTime,
@@ -26,11 +27,19 @@ pub fn listen_for_events(
     event_fetch_option: EventFetchOption,
     event_handler: impl Fn(&EventLogEvent) + Send + 'static,
 ) -> Result<(), EventLogError> {
-    let channel = WidePcwstr::new(event_log_section).as_pcwstr();
+    log::info!(
+        "Loading event listener. Duration: {:#?};  Fetch Option: {:#?}; From: {} Event Ids: {:#?}",
+        polling,
+        &event_fetch_option,
+        event_log_section,
+        &event_ids,
+    );
 
+    let channel = WidePcwstr::new(event_log_section).as_pcwstr();
     let query = create_event_log_query(event_log_section, event_ids);
     let query = WidePcwstr::new(&query);
     let query = query.as_pcwstr();
+    log::trace!("Made pcwide strings");
 
     let callback_wrapper = Box::new(CallbackWrapper {
         _callback: Box::new(event_handler),
@@ -38,6 +47,7 @@ pub fn listen_for_events(
 
     // Convert to raw pointer
     let user_context = Box::into_raw(callback_wrapper) as *mut std::ffi::c_void;
+    log::trace!("made callback c_void ptr");
 
     // Open a subscription to the event logca
     let _subscription = unsafe {
@@ -54,7 +64,10 @@ pub fn listen_for_events(
     }
     .map_err(|e| EventLogError::Subscription(e.code().0, e.message()))?;
 
+    log::debug!("made Event Log subscription");
+
     ctrlc::set_handler(move || {
+        log::info!("ctrl-c: Shutting down win event log subscription");
         println!("Shutting down win event log subscription");
         // Clean up the subscription
         unsafe {
@@ -69,9 +82,11 @@ pub fn listen_for_events(
     })
     .expect("Error setting Ctrl-C handler");
 
+    log::info!("Listening for new PC lock/unlock events");
     println!("Listening for new PC lock/unlock events");
     loop {
         thread::sleep(polling);
+        log::trace!("Sleeping for poll duration");
     }
 }
 
@@ -80,6 +95,7 @@ unsafe extern "system" fn event_callback(
     user_context: *const std::ffi::c_void,
     event_handle: EVT_HANDLE,
 ) -> u32 {
+    log::trace!("Got an event callback");
     let callback = user_context as *mut Box<dyn Fn(&EventLogEvent)>;
 
     unsafe {
@@ -96,6 +112,7 @@ unsafe extern "system" fn event_callback(
 }
 
 fn create_event_log_query(event_log_section: &str, event_ids: &[u32]) -> String {
+    log::trace!("construcing {} log xml query strings", event_ids.len());
     let mut query = format!("<QueryList><Query Id=\"0\" Path=\"{}\">", event_log_section);
 
     for &event_id in event_ids {
@@ -112,6 +129,7 @@ fn create_event_log_query(event_log_section: &str, event_ids: &[u32]) -> String 
 }
 
 unsafe fn parse_event_log_event(event_handle: EVT_HANDLE) -> Result<EventLogEvent, EventLogError> {
+    log::trace!("Parsing log event from handle: {}", &event_handle.0);
     // Ensure event handle is valid
     if event_handle.is_invalid() {
         return Err(EventLogError::Win32(0, "Invalid event handle".to_string()));
@@ -150,6 +168,7 @@ unsafe fn parse_event_log_event(event_handle: EVT_HANDLE) -> Result<EventLogEven
             &mut buffer_required,
         )
     };
+    log::trace!("Rendered result");
 
     // Error handling
     render_result.map_err(|error| EventLogError::EventRendering {
@@ -169,6 +188,7 @@ unsafe fn parse_event_log_event(event_handle: EVT_HANDLE) -> Result<EventLogEven
 
     // Always free the buffer
     unsafe {
+        log::trace!("Freed wide string pointer buffer");
         HeapFree(process_heap, HEAP_FLAGS(0), Some(buffer))
             .map_err(|e| EventLogError::Win32(e.code().0, e.to_string()))?;
     }
@@ -191,6 +211,7 @@ pub struct EventLogEvent {
 }
 
 fn parse_event_xml(xml: &str) -> Result<EventLogEvent, EventLogError> {
+    log::trace!("Parsing event xml string, len {}", xml.len());
     let mut reader = Reader::from_str(xml);
 
     let mut event_id: i32 = 0;

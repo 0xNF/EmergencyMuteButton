@@ -12,6 +12,7 @@ use windows::{
 };
 
 pub fn initialize_com() -> Result<(), AudioError> {
+    log::debug!("Initializing COM");
     unsafe {
         CoInitializeEx(None, COINIT_APARTMENTTHREADED)
             .ok()
@@ -20,6 +21,7 @@ pub fn initialize_com() -> Result<(), AudioError> {
 }
 
 pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
+    log::info!("Muting Primary Output Device");
     initialize_com()?;
     unsafe {
         let device_enumerator: IMMDeviceEnumerator =
@@ -34,6 +36,7 @@ pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
 }
 
 fn uninitialize_com() {
+    log::debug!("Uninitializing COM");
     unsafe {
         CoUninitialize();
     }
