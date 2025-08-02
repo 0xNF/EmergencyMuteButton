@@ -11,7 +11,7 @@ fn main() {
     if let Err(e) = win_event::listen_for_events(
         "Security",
         &listening_event_ids,
-        Duration::from_millis(10),
+        Duration::from_secs(1),
         win_event::EventFetchOption::FromSubscriptionTime,
         |e| {
             win_event::print_event_log_details(e);
