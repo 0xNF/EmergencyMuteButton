@@ -1,5 +1,3 @@
-use std::sync::{Once, OnceLock};
-
 use windows::{
     Win32::{
         Media::Audio::{
@@ -13,23 +11,12 @@ use windows::{
     core::Error,
 };
 
-static COM_INIT: Once = Once::new();
-static COM_INIT_RESULT: OnceLock<Result<(), AudioError>> = OnceLock::new();
-
 pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
-    COM_INIT.call_once(|| {
-        let result = unsafe {
-            CoInitializeEx(None, COINIT_APARTMENTTHREADED)
-                .ok()
-                .map_err(|e| e.into())
-        };
-        COM_INIT_RESULT.get_or_init(|| result);
-    });
-
-    COM_INIT_RESULT.get().ok_or_else(|| {
-        let e = Error::from_win32();
-        AudioError::from(e)
-    })?;
+    unsafe {
+        CoInitializeEx(None, COINIT_APARTMENTTHREADED)
+            .ok()
+            .map_err(|e| AudioError::from(e))
+    }?;
 
     unsafe {
         let device_enumerator: IMMDeviceEnumerator =

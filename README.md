@@ -32,3 +32,11 @@ Mutes your audio playback devices when you logon, logoff, lock, or unlock your c
             Logon/Logoff
             Audit Other Logon/Logoff Events
 
+
+
+# Building
+
+`cargo build`
+
+# Running
+Must run as an admin because of Event Log access
