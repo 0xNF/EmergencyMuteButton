@@ -59,7 +59,10 @@ pub fn listen_for_events(
         // Clean up the subscription
         unsafe {
             if let Err(e) = EvtClose(_subscription) {
-                eprintln!("Failed to close subscription channel, artifacts may remain");
+                eprintln!(
+                    "Failed to close subscription channel, artifacts may remain: {}",
+                    e
+                );
             }
         };
         std::process::exit(-1)
