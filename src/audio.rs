@@ -11,13 +11,16 @@ use windows::{
     core::Error,
 };
 
-pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
+pub fn initialize_com() -> Result<(), AudioError> {
     unsafe {
         CoInitializeEx(None, COINIT_APARTMENTTHREADED)
             .ok()
             .map_err(|e| AudioError::from(e))
-    }?;
+    }
+}
 
+pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
+    initialize_com()?;
     unsafe {
         let device_enumerator: IMMDeviceEnumerator =
             CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
@@ -25,11 +28,12 @@ pub fn set_system_volume_to_zero() -> Result<(), AudioError> {
         let volume_ptr: IAudioEndpointVolume = device.Activate(CLSCTX_ALL, None)?;
         volume_ptr.SetMute(true, std::ptr::null())?;
     }
+    uninitialize_com();
 
     Ok(())
 }
 
-pub fn uninitialize_com() {
+fn uninitialize_com() {
     unsafe {
         CoUninitialize();
     }

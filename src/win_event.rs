@@ -40,7 +40,7 @@ pub fn listen_for_events(
     let user_context = Box::into_raw(callback_wrapper) as *mut std::ffi::c_void;
 
     // Open a subscription to the event logca
-    let subscription = unsafe {
+    let _subscription = unsafe {
         EvtSubscribe(
             None,
             None,
@@ -60,7 +60,7 @@ pub fn listen_for_events(
     }
 
     // Clean up the subscription
-    unsafe { EvtClose(subscription) };
+    unsafe { EvtClose(_subscription) };
     Ok(())
 }
 
