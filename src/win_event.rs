@@ -54,14 +54,20 @@ pub fn listen_for_events(
     }
     .map_err(|e| EventLogError::Subscription(e.code().0, e.message()))?;
 
+    ctrlc::set_handler(move || {
+        println!("Shutting down win event log subscription");
+        // Clean up the subscription
+        unsafe {
+            let _ = EvtClose(_subscription);
+        };
+        std::process::exit(-1)
+    })
+    .expect("Error setting Ctrl-C handler");
+
     println!("Listening for new PC lock/unlock events");
     loop {
         thread::sleep(polling);
     }
-
-    // Clean up the subscription
-    unsafe { EvtClose(_subscription) };
-    Ok(())
 }
 
 unsafe extern "system" fn event_callback(
