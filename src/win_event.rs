@@ -58,7 +58,9 @@ pub fn listen_for_events(
         println!("Shutting down win event log subscription");
         // Clean up the subscription
         unsafe {
-            let _ = EvtClose(_subscription);
+            if let Err(e) = EvtClose(_subscription) {
+                eprintln!("Failed to close subscription channel, artifacts may remain");
+            }
         };
         std::process::exit(-1)
     })
