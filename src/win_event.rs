@@ -25,7 +25,8 @@ pub fn listen_for_events(
     event_ids: &[u32],
     polling: Duration,
     event_fetch_option: EventFetchOption,
-    event_handler: impl Fn(&EventLogEvent) + Send + 'static,
+    on_event: impl Fn(&EventLogEvent) + Send + 'static,
+    shutdown_signal: std::sync::mpsc::Receiver<()>,
 ) -> Result<(), EventLogError> {
     log::info!(
         "Loading event listener. Duration: {:#?};  Fetch Option: {:#?}; From: {} Event Ids: {:#?}",
@@ -42,7 +43,7 @@ pub fn listen_for_events(
     log::trace!("Made pcwide strings");
 
     let callback_wrapper = Box::new(CallbackWrapper {
-        _callback: Box::new(event_handler),
+        _callback: Box::new(on_event),
     });
 
     // Convert to raw pointer
@@ -65,28 +66,23 @@ pub fn listen_for_events(
     .map_err(|e| EventLogError::Subscription(e.code().0, e.message()))?;
 
     log::debug!("made Event Log subscription");
-
-    ctrlc::set_handler(move || {
-        log::info!("ctrl-c: Shutting down win event log subscription");
-        println!("Shutting down win event log subscription");
-        // Clean up the subscription
-        unsafe {
-            if let Err(e) = EvtClose(_subscription) {
-                eprintln!(
-                    "Failed to close subscription channel, artifacts may remain: {}",
-                    e
-                );
-            }
-        };
-        std::process::exit(-1)
-    })
-    .expect("Error setting Ctrl-C handler");
-
     log::info!("Listening for new PC lock/unlock events");
     println!("Listening for new PC lock/unlock events");
     loop {
+        if shutdown_signal.try_recv().is_ok() {
+            close_subscription(_subscription);
+        }
         thread::sleep(polling);
         log::trace!("Sleeping for poll duration");
+    }
+}
+
+fn close_subscription(subscription: EVT_HANDLE) {
+    if let Err(e) = unsafe { EvtClose(subscription) } {
+        eprintln!(
+            "Failed to close subscription channel, artifacts may remain: {}",
+            e
+        );
     }
 }
 
