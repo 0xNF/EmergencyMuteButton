@@ -2,10 +2,40 @@
 name = "EmergencyMuteButton"
 version = "0.1.0"
 edition = "2024"
+authors = ["0xNF <nf@Winetech>"]
+description = "Mutes your primary speaker whenever your computer is locked or unlocked"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/0xNF/EmergencyMuteButton"
+homepage = "https://projects.winetech.com/emergencymutebutton"
+keywords = ["win32", "EventLog", "audio"]
+categories = ["config", "multimedia::audio", "os::windows-apis"]
 
 [dependencies]
 ctrlc = "3.4.7"
 log = "0.4.27"
 quick-xml = "0.38.0"
-windows = { version = "0.61.3", features = ["Wdk_System_SystemServices", "Win32_System_EventLog", "Win32_System_Memory", "Win32_System_Com", "Win32_Media_Audio", "Win32_Media_Audio_Endpoints", "Win32_Foundation", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
+windows = { version = "0.61.3", features = [
+    "Wdk_System_SystemServices",
+    "Win32_System_EventLog",
+    "Win32_System_Memory",
+    "Win32_System_Com",
+    "Win32_Media_Audio",
+    "Win32_Media_Audio_Endpoints",
+    "Win32_Foundation",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Variant",
+] }
 windows-service = "0.8.0"
+
+
+[package.metadata.bundle]
+identifier = "com.winetech.emergencymutebutton"
+icon = ["32x32.png", "128x128.png", "128x128@2x.png"]
+copyright = "Copyright (c) Winetech 2025. All rights reserved."
+long_description = """
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+eiusmod tempor incididunt ut labore et dolore magna aliqua.  Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat.
+"""

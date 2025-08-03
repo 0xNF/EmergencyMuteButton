@@ -71,6 +71,7 @@ pub fn listen_for_events(
     loop {
         if shutdown_signal.try_recv().is_ok() {
             close_subscription(_subscription);
+            return Ok(());
         }
         thread::sleep(polling);
         log::trace!("Sleeping for poll duration");

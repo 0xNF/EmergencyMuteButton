@@ -40,3 +40,7 @@ Mutes your audio playback devices when you logon, logoff, lock, or unlock your c
 
 # Running
 Must run as an admin because of Event Log access
+
+# See also:
+https://github.com/mullvad/windows-service-rs
+https://medium.com/@aleksej.gudkov/rust-windows-service-example-building-a-windows-service-in-rust-907be67d2287
