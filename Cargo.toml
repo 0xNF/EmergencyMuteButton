@@ -31,7 +31,6 @@ windows-service = "0.8.0"
 
 [package.metadata.bundle]
 identifier = "com.winetech.emergencymutebutton"
-icon = ["32x32.png", "128x128.png", "128x128@2x.png"]
 copyright = "Copyright (c) Winetech 2025. All rights reserved."
 long_description = """
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
