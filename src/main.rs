@@ -21,7 +21,7 @@ extern crate windows_service;
 define_windows_service!(ffi_service_main, service_main);
 
 fn service_main(_arguments: Vec<OsString>) {
-    env_logger::init();
+    let _ = env_logger::try_init();
     log::info!("Starting EmergencyMuteButton as Windows Service");
     let (shutdown_tx, shutdown_rx) = std::sync::mpsc::channel::<()>();
     let shutdown_tx_ctrl_c = shutdown_tx.clone();
@@ -115,18 +115,23 @@ fn app_main(shutdown_signal: Receiver<()>) {
 }
 
 fn main() {
+    unsafe { std::env::set_var("RUST_LOG", "trace") };
     env_logger::init();
     log::info!("Starting EmergencyMuteButton");
 
     if std::env::args().any(|arg| arg == "install") {
+        log::info!("running install");
         service::install_service();
         return;
     }
 
     if std::env::args().any(|arg| arg == "uninstall") {
+        log::info!("running uninstall");
         service::uninstall_service();
         return;
     }
+
+    log::info!("running ffi_service_main");
     if let Err(e) = service_dispatcher::start(SERVICE_NAME, ffi_service_main) {
         eprintln!("Failed to start service: {:?}", e);
     }
